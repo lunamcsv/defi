@@ -7,11 +7,11 @@ import './libs/SafeBEP20.sol';
 import './libs/ReentrancyGuard.sol';
 
 /**
- * @dev PantherSwap: Initial Panther Offering
+ * @dev FrameSwap: Initial Frame Offering
  *
- * Website: https://pantherswap.com
- * Dex: https://dex.pantherswap.com
- * Twitter: https://twitter.com/PantherSwap
+ * Website: https://frameswap.com
+ * Dex: https://dex.frameswap.com
+ * Twitter: https://twitter.com/FrameSwap
  *
  */
 contract IPO is ReentrancyGuard {

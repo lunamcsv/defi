@@ -21,7 +21,7 @@ contract Lottery is LotteryOwnable, Initializable {
     // Allocation for first/sencond/third reward
     uint8[3] public allocation;
     // The TOKEN to buy lottery
-    IERC20 public panther;
+    IERC20 public frame;
     // The Lottery NFT for tickets
     LotteryNFT public lotteryNFT;
     // adminAddress
@@ -68,14 +68,14 @@ contract Lottery is LotteryOwnable, Initializable {
     }
 
     function initialize(
-        IERC20 _panther,
+        IERC20 _frame,
         LotteryNFT _lottery,
         uint256 _minPrice,
         uint8 _maxNumber,
         address _owner,
         address _adminAddress
     ) public initializer {
-        panther = _panther;
+        frame = _frame;
         lotteryNFT = _lottery;
         minPrice = _minPrice;
         maxNumber = _maxNumber;
@@ -222,7 +222,7 @@ contract Lottery is LotteryOwnable, Initializable {
         for (uint i = 0; i < keyLengthForEachBuy; i++) {
             userBuyAmountSum[issueIndex][userNumberIndex[i]]=userBuyAmountSum[issueIndex][userNumberIndex[i]].add(_price);
         }
-        panther.safeTransferFrom(address(msg.sender), address(this), _price);
+        frame.safeTransferFrom(address(msg.sender), address(this), _price);
         emit Buy(msg.sender, tokenId);
     }
 
@@ -249,7 +249,7 @@ contract Lottery is LotteryOwnable, Initializable {
                 userBuyAmountSum[issueIndex][numberIndexKey[k]]=userBuyAmountSum[issueIndex][numberIndexKey[k]].add(_price);
             }
         }
-        panther.safeTransferFrom(address(msg.sender), address(this), totalPrice);
+        frame.safeTransferFrom(address(msg.sender), address(this), totalPrice);
         emit MultiBuy(msg.sender, totalPrice);
     }
 
@@ -259,7 +259,7 @@ contract Lottery is LotteryOwnable, Initializable {
         uint256 reward = getRewardView(_tokenId);
         lotteryNFT.claimReward(_tokenId);
         if(reward>0) {
-            panther.safeTransfer(address(msg.sender), reward);
+            frame.safeTransfer(address(msg.sender), reward);
         }
         emit Claim(msg.sender, _tokenId, reward);
     }
@@ -276,7 +276,7 @@ contract Lottery is LotteryOwnable, Initializable {
         }
         lotteryNFT.multiClaimReward(_tickets);
         if(totalReward>0) {
-            panther.safeTransfer(address(msg.sender), totalReward);
+            frame.safeTransfer(address(msg.sender), totalReward);
         }
         emit MultiClaim(msg.sender, totalReward);
     }
@@ -372,7 +372,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function adminWithdraw(uint256 _amount) public onlyAdmin {
-        panther.safeTransfer(address(msg.sender), _amount);
+        frame.safeTransfer(address(msg.sender), _amount);
         emit DevWithdraw(msg.sender, _amount);
     }
 

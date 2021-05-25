@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import './PantherPair.sol';
+import './FramePair.sol';
 
-contract PantherFactory {
-    bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(PantherPair).creationCode));
+contract FrameFactory {
+    bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(FramePair).creationCode));
 
     address public feeTo;
     address public feeToSetter;
@@ -23,16 +23,16 @@ contract PantherFactory {
     }
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
-        require(tokenA != tokenB, 'Panther: IDENTICAL_ADDRESSES');
+        require(tokenA != tokenB, 'Frame: IDENTICAL_ADDRESSES');
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'Panther: ZERO_ADDRESS');
-        require(getPair[token0][token1] == address(0), 'Panther: PAIR_EXISTS'); // single check is sufficient
-        bytes memory bytecode = type(PantherPair).creationCode;
+        require(token0 != address(0), 'Frame: ZERO_ADDRESS');
+        require(getPair[token0][token1] == address(0), 'Frame: PAIR_EXISTS'); // single check is sufficient
+        bytes memory bytecode = type(FramePair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         assembly {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
-        IPantherPair(pair).initialize(token0, token1);
+        IFramePair(pair).initialize(token0, token1);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);
@@ -40,12 +40,12 @@ contract PantherFactory {
     }
 
     function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, 'Panther: FORBIDDEN');
+        require(msg.sender == feeToSetter, 'Frame: FORBIDDEN');
         feeTo = _feeTo;
     }
 
     function setFeeToSetter(address _feeToSetter) external {
-        require(msg.sender == feeToSetter, 'Panther: FORBIDDEN');
+        require(msg.sender == feeToSetter, 'Frame: FORBIDDEN');
         feeToSetter = _feeToSetter;
     }
 }

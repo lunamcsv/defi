@@ -6,11 +6,11 @@ import "./libs/ReentrancyGuard.sol";
 import "./libs/SafeMath.sol";
 import "./libs/SafeBEP20.sol";
 
-contract PantherJungleInitializable is Ownable, ReentrancyGuard {
+contract FrameJungleInitializable is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
 
-    // The address of the panther jungle factory
+    // The address of the frame jungle factory
     address public PANTHER_JUNGLE_FACTORY;
 
     // Whether a limit is set for users

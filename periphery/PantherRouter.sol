@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import './interfaces/IPantherFactory.sol';
+import './interfaces/IFrameFactory.sol';
 import './libraries/TransferHelper.sol';
 
-import './interfaces/IPantherRouter02.sol';
-import './libraries/PantherLibrary.sol';
+import './interfaces/IFrameRouter02.sol';
+import './libraries/FrameLibrary.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
 
-contract PantherRouter is IPantherRouter02 {
+contract FrameRouter is IFrameRouter02 {
     using SafeMath for uint;
 
     address public immutable override factory;
     address public immutable override WETH;
 
     modifier ensure(uint deadline) {
-        require(deadline >= block.timestamp, 'PantherRouter: EXPIRED');
+        require(deadline >= block.timestamp, 'FrameRouter: EXPIRED');
         _;
     }
 
@@ -40,21 +40,21 @@ contract PantherRouter is IPantherRouter02 {
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
         // create the pair if it doesn't exist yet
-        if (IPantherFactory(factory).getPair(tokenA, tokenB) == address(0)) {
-            IPantherFactory(factory).createPair(tokenA, tokenB);
+        if (IFrameFactory(factory).getPair(tokenA, tokenB) == address(0)) {
+            IFrameFactory(factory).createPair(tokenA, tokenB);
         }
-        (uint reserveA, uint reserveB) = PantherLibrary.getReserves(factory, tokenA, tokenB);
+        (uint reserveA, uint reserveB) = FrameLibrary.getReserves(factory, tokenA, tokenB);
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {
-            uint amountBOptimal = PantherLibrary.quote(amountADesired, reserveA, reserveB);
+            uint amountBOptimal = FrameLibrary.quote(amountADesired, reserveA, reserveB);
             if (amountBOptimal <= amountBDesired) {
-                require(amountBOptimal >= amountBMin, 'PantherRouter: INSUFFICIENT_B_AMOUNT');
+                require(amountBOptimal >= amountBMin, 'FrameRouter: INSUFFICIENT_B_AMOUNT');
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
-                uint amountAOptimal = PantherLibrary.quote(amountBDesired, reserveB, reserveA);
+                uint amountAOptimal = FrameLibrary.quote(amountBDesired, reserveB, reserveA);
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMin, 'PantherRouter: INSUFFICIENT_A_AMOUNT');
+                require(amountAOptimal >= amountAMin, 'FrameRouter: INSUFFICIENT_A_AMOUNT');
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -70,10 +70,10 @@ contract PantherRouter is IPantherRouter02 {
         uint deadline
     ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
-        address pair = PantherLibrary.pairFor(factory, tokenA, tokenB);
+        address pair = FrameLibrary.pairFor(factory, tokenA, tokenB);
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
-        liquidity = IPantherPair(pair).mint(to);
+        liquidity = IFramePair(pair).mint(to);
     }
     function addLiquidityETH(
         address token,
@@ -91,11 +91,11 @@ contract PantherRouter is IPantherRouter02 {
             amountTokenMin,
             amountETHMin
         );
-        address pair = PantherLibrary.pairFor(factory, token, WETH);
+        address pair = FrameLibrary.pairFor(factory, token, WETH);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         IWETH(WETH).deposit{value: amountETH}();
         assert(IWETH(WETH).transfer(pair, amountETH));
-        liquidity = IPantherPair(pair).mint(to);
+        liquidity = IFramePair(pair).mint(to);
         // refund dust eth, if any
         if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
     }
@@ -110,13 +110,13 @@ contract PantherRouter is IPantherRouter02 {
         address to,
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
-        address pair = PantherLibrary.pairFor(factory, tokenA, tokenB);
-        IPantherPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
-        (uint amount0, uint amount1) = IPantherPair(pair).burn(to);
-        (address token0,) = PantherLibrary.sortTokens(tokenA, tokenB);
+        address pair = FrameLibrary.pairFor(factory, tokenA, tokenB);
+        IFramePair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+        (uint amount0, uint amount1) = IFramePair(pair).burn(to);
+        (address token0,) = FrameLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= amountAMin, 'PantherRouter: INSUFFICIENT_A_AMOUNT');
-        require(amountB >= amountBMin, 'PantherRouter: INSUFFICIENT_B_AMOUNT');
+        require(amountA >= amountAMin, 'FrameRouter: INSUFFICIENT_A_AMOUNT');
+        require(amountB >= amountBMin, 'FrameRouter: INSUFFICIENT_B_AMOUNT');
     }
     function removeLiquidityETH(
         address token,
@@ -149,9 +149,9 @@ contract PantherRouter is IPantherRouter02 {
         uint deadline,
         bool approveMax, uint8 v, bytes32 r, bytes32 s
     ) external virtual override returns (uint amountA, uint amountB) {
-        address pair = PantherLibrary.pairFor(factory, tokenA, tokenB);
+        address pair = FrameLibrary.pairFor(factory, tokenA, tokenB);
         uint value = approveMax ? ~uint256(0) : liquidity;
-        IPantherPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+        IFramePair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
     }
     function removeLiquidityETHWithPermit(
@@ -163,9 +163,9 @@ contract PantherRouter is IPantherRouter02 {
         uint deadline,
         bool approveMax, uint8 v, bytes32 r, bytes32 s
     ) external virtual override returns (uint amountToken, uint amountETH) {
-        address pair = PantherLibrary.pairFor(factory, token, WETH);
+        address pair = FrameLibrary.pairFor(factory, token, WETH);
         uint value = approveMax ? ~uint256(0) : liquidity;
-        IPantherPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+        IFramePair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
     }
 
@@ -200,9 +200,9 @@ contract PantherRouter is IPantherRouter02 {
         uint deadline,
         bool approveMax, uint8 v, bytes32 r, bytes32 s
     ) external virtual override returns (uint amountETH) {
-        address pair = PantherLibrary.pairFor(factory, token, WETH);
+        address pair = FrameLibrary.pairFor(factory, token, WETH);
         uint value = approveMax ? ~uint256(0) : liquidity;
-        IPantherPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+        IFramePair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
             token, liquidity, amountTokenMin, amountETHMin, to, deadline
         );
@@ -213,11 +213,11 @@ contract PantherRouter is IPantherRouter02 {
     function _swap(uint[] memory amounts, address[] memory path, address _to) internal virtual {
         for (uint i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (address token0,) = PantherLibrary.sortTokens(input, output);
+            (address token0,) = FrameLibrary.sortTokens(input, output);
             uint amountOut = amounts[i + 1];
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
-            address to = i < path.length - 2 ? PantherLibrary.pairFor(factory, output, path[i + 2]) : _to;
-            IPantherPair(PantherLibrary.pairFor(factory, input, output)).swap(
+            address to = i < path.length - 2 ? FrameLibrary.pairFor(factory, output, path[i + 2]) : _to;
+            IFramePair(FrameLibrary.pairFor(factory, input, output)).swap(
                 amount0Out, amount1Out, to, new bytes(0)
             );
         }
@@ -229,10 +229,10 @@ contract PantherRouter is IPantherRouter02 {
         address to,
         uint deadline
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
-        amounts = PantherLibrary.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'PantherRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        amounts = FrameLibrary.getAmountsOut(factory, amountIn, path);
+        require(amounts[amounts.length - 1] >= amountOutMin, 'FrameRouter: INSUFFICIENT_OUTPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
-            path[0], msg.sender, PantherLibrary.pairFor(factory, path[0], path[1]), amounts[0]
+            path[0], msg.sender, FrameLibrary.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, to);
     }
@@ -243,10 +243,10 @@ contract PantherRouter is IPantherRouter02 {
         address to,
         uint deadline
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
-        amounts = PantherLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'PantherRouter: EXCESSIVE_INPUT_AMOUNT');
+        amounts = FrameLibrary.getAmountsIn(factory, amountOut, path);
+        require(amounts[0] <= amountInMax, 'FrameRouter: EXCESSIVE_INPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
-            path[0], msg.sender, PantherLibrary.pairFor(factory, path[0], path[1]), amounts[0]
+            path[0], msg.sender, FrameLibrary.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, to);
     }
@@ -258,11 +258,11 @@ contract PantherRouter is IPantherRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, 'PantherRouter: INVALID_PATH');
-        amounts = PantherLibrary.getAmountsOut(factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'PantherRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(path[0] == WETH, 'FrameRouter: INVALID_PATH');
+        amounts = FrameLibrary.getAmountsOut(factory, msg.value, path);
+        require(amounts[amounts.length - 1] >= amountOutMin, 'FrameRouter: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(PantherLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
+        assert(IWETH(WETH).transfer(FrameLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
     }
     function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
@@ -272,11 +272,11 @@ contract PantherRouter is IPantherRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, 'PantherRouter: INVALID_PATH');
-        amounts = PantherLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'PantherRouter: EXCESSIVE_INPUT_AMOUNT');
+        require(path[path.length - 1] == WETH, 'FrameRouter: INVALID_PATH');
+        amounts = FrameLibrary.getAmountsIn(factory, amountOut, path);
+        require(amounts[0] <= amountInMax, 'FrameRouter: EXCESSIVE_INPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
-            path[0], msg.sender, PantherLibrary.pairFor(factory, path[0], path[1]), amounts[0]
+            path[0], msg.sender, FrameLibrary.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
         IWETH(WETH).withdraw(amounts[amounts.length - 1]);
@@ -289,11 +289,11 @@ contract PantherRouter is IPantherRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, 'PantherRouter: INVALID_PATH');
-        amounts = PantherLibrary.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'PantherRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(path[path.length - 1] == WETH, 'FrameRouter: INVALID_PATH');
+        amounts = FrameLibrary.getAmountsOut(factory, amountIn, path);
+        require(amounts[amounts.length - 1] >= amountOutMin, 'FrameRouter: INSUFFICIENT_OUTPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
-            path[0], msg.sender, PantherLibrary.pairFor(factory, path[0], path[1]), amounts[0]
+            path[0], msg.sender, FrameLibrary.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
         IWETH(WETH).withdraw(amounts[amounts.length - 1]);
@@ -307,11 +307,11 @@ contract PantherRouter is IPantherRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, 'PantherRouter: INVALID_PATH');
-        amounts = PantherLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, 'PantherRouter: EXCESSIVE_INPUT_AMOUNT');
+        require(path[0] == WETH, 'FrameRouter: INVALID_PATH');
+        amounts = FrameLibrary.getAmountsIn(factory, amountOut, path);
+        require(amounts[0] <= msg.value, 'FrameRouter: EXCESSIVE_INPUT_AMOUNT');
         IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(PantherLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
+        assert(IWETH(WETH).transfer(FrameLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
         // refund dust eth, if any
         if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
@@ -322,18 +322,18 @@ contract PantherRouter is IPantherRouter02 {
     function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {
         for (uint i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (address token0,) = PantherLibrary.sortTokens(input, output);
-            IPantherPair pair = IPantherPair(PantherLibrary.pairFor(factory, input, output));
+            (address token0,) = FrameLibrary.sortTokens(input, output);
+            IFramePair pair = IFramePair(FrameLibrary.pairFor(factory, input, output));
             uint amountInput;
             uint amountOutput;
             { // scope to avoid stack too deep errors
             (uint reserve0, uint reserve1,) = pair.getReserves();
             (uint reserveInput, uint reserveOutput) = input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
             amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);
-            amountOutput = PantherLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
+            amountOutput = FrameLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
             }
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOutput) : (amountOutput, uint(0));
-            address to = i < path.length - 2 ? PantherLibrary.pairFor(factory, output, path[i + 2]) : _to;
+            address to = i < path.length - 2 ? FrameLibrary.pairFor(factory, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }
     }
@@ -345,13 +345,13 @@ contract PantherRouter is IPantherRouter02 {
         uint deadline
     ) external virtual override ensure(deadline) {
         TransferHelper.safeTransferFrom(
-            path[0], msg.sender, PantherLibrary.pairFor(factory, path[0], path[1]), amountIn
+            path[0], msg.sender, FrameLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'PantherRouter: INSUFFICIENT_OUTPUT_AMOUNT'
+            'FrameRouter: INSUFFICIENT_OUTPUT_AMOUNT'
         );
     }
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -366,15 +366,15 @@ contract PantherRouter is IPantherRouter02 {
         payable
         ensure(deadline)
     {
-        require(path[0] == WETH, 'PantherRouter: INVALID_PATH');
+        require(path[0] == WETH, 'FrameRouter: INVALID_PATH');
         uint amountIn = msg.value;
         IWETH(WETH).deposit{value: amountIn}();
-        assert(IWETH(WETH).transfer(PantherLibrary.pairFor(factory, path[0], path[1]), amountIn));
+        assert(IWETH(WETH).transfer(FrameLibrary.pairFor(factory, path[0], path[1]), amountIn));
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'PantherRouter: INSUFFICIENT_OUTPUT_AMOUNT'
+            'FrameRouter: INSUFFICIENT_OUTPUT_AMOUNT'
         );
     }
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -389,20 +389,20 @@ contract PantherRouter is IPantherRouter02 {
         override
         ensure(deadline)
     {
-        require(path[path.length - 1] == WETH, 'PantherRouter: INVALID_PATH');
+        require(path[path.length - 1] == WETH, 'FrameRouter: INVALID_PATH');
         TransferHelper.safeTransferFrom(
-            path[0], msg.sender, PantherLibrary.pairFor(factory, path[0], path[1]), amountIn
+            path[0], msg.sender, FrameLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint amountOut = IERC20(WETH).balanceOf(address(this));
-        require(amountOut >= amountOutMin, 'PantherRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amountOut >= amountOutMin, 'FrameRouter: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
     }
 
     // **** LIBRARY FUNCTIONS ****
     function quote(uint amountA, uint reserveA, uint reserveB) public pure virtual override returns (uint amountB) {
-        return PantherLibrary.quote(amountA, reserveA, reserveB);
+        return FrameLibrary.quote(amountA, reserveA, reserveB);
     }
 
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut)
@@ -412,7 +412,7 @@ contract PantherRouter is IPantherRouter02 {
         override
         returns (uint amountOut)
     {
-        return PantherLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
+        return FrameLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
     function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)
@@ -422,7 +422,7 @@ contract PantherRouter is IPantherRouter02 {
         override
         returns (uint amountIn)
     {
-        return PantherLibrary.getAmountIn(amountOut, reserveIn, reserveOut);
+        return FrameLibrary.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
     function getAmountsOut(uint amountIn, address[] memory path)
@@ -432,7 +432,7 @@ contract PantherRouter is IPantherRouter02 {
         override
         returns (uint[] memory amounts)
     {
-        return PantherLibrary.getAmountsOut(factory, amountIn, path);
+        return FrameLibrary.getAmountsOut(factory, amountIn, path);
     }
 
     function getAmountsIn(uint amountOut, address[] memory path)
@@ -442,6 +442,6 @@ contract PantherRouter is IPantherRouter02 {
         override
         returns (uint[] memory amounts)
     {
-        return PantherLibrary.getAmountsIn(factory, amountOut, path);
+        return FrameLibrary.getAmountsIn(factory, amountOut, path);
     }
 }

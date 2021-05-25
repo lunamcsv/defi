@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import './IPantherRouter01.sol';
+import './IFrameRouter01.sol';
 
-interface IPantherRouter02 is IPantherRouter01 {
+interface IFrameRouter02 is IFrameRouter01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
         uint liquidity,

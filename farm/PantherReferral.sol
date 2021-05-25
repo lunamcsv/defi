@@ -3,10 +3,10 @@ pragma solidity >=0.8.4;
 
 import "./libs/IBEP20.sol";
 import "./libs/SafeBEP20.sol";
-import "./libs/IPantherReferral.sol";
+import "./libs/IFrameReferral.sol";
 import "./libs/Ownable.sol";
 
-contract PantherReferral is IPantherReferral, Ownable {
+contract FrameReferral is IFrameReferral, Ownable {
     using SafeBEP20 for IBEP20;
 
     mapping(address => bool) public operators;

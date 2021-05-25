@@ -3,10 +3,10 @@ pragma solidity >=0.8.4;
 
 import "./libs/Ownable.sol";
 import "./libs/ReentrancyGuard.sol";
-import "./PantherJungle.sol";
+import "./FrameJungle.sol";
 
-contract PantherJungleFactory is Ownable {
-    event NewPantherJungleContract(address indexed pantherJungle);
+contract FrameJungleFactory is Ownable {
+    event NewFrameJungleContract(address indexed frameJungle);
 
     constructor() {
         //
@@ -21,7 +21,7 @@ contract PantherJungleFactory is Ownable {
      * @param _endBlock: end block
      * @param _poolLimitPerUser: pool limit per user in stakedToken (if any, else 0)
      * @param _admin: admin address with ownership
-     * @return address of new panther jungle contract
+     * @return address of new frame jungle contract
      */
     function deployPool(
         IBEP20 _stakedToken,
@@ -36,15 +36,15 @@ contract PantherJungleFactory is Ownable {
         require(_rewardToken.totalSupply() >= 0);
         require(_stakedToken != _rewardToken, "Tokens must be be different");
 
-        bytes memory bytecode = type(PantherJungleInitializable).creationCode;
+        bytes memory bytecode = type(FrameJungleInitializable).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(_stakedToken, _rewardToken, _startBlock));
-        address pantherJungleAddress;
+        address frameJungleAddress;
 
         assembly {
-            pantherJungleAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
+            frameJungleAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
 
-        PantherJungleInitializable(pantherJungleAddress).initialize(
+        FrameJungleInitializable(frameJungleAddress).initialize(
             _stakedToken,
             _rewardToken,
             _rewardPerBlock,
@@ -54,6 +54,6 @@ contract PantherJungleFactory is Ownable {
             _admin
         );
 
-        emit NewPantherJungleContract(pantherJungleAddress);
+        emit NewFrameJungleContract(frameJungleAddress);
     }
 }

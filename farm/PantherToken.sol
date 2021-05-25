@@ -7,8 +7,8 @@ import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IUniswapV2Pair.sol";
 import "./interfaces/IUniswapV2Factory.sol";
 
-// PantherToken with Governance.
-contract PantherToken is BEP20 {
+// FrameToken with Governance.
+contract FrameToken is BEP20 {
     using SafeMath for uint256;
     // Transfer tax rate in basis points. (default 5%)
     uint16 public transferTaxRate = 500;
@@ -27,10 +27,10 @@ contract PantherToken is BEP20 {
     bool public swapAndLiquifyEnabled = false;
     // Min amount to liquify. (default 500 PANTHERs)
     uint256 public minAmountToLiquify = 500 ether;
-    // The swap router, modifiable. Will be changed to PantherSwap's router when our own AMM release
-    IUniswapV2Router02 public pantherSwapRouter;
+    // The swap router, modifiable. Will be changed to FrameSwap's router when our own AMM release
+    IUniswapV2Router02 public frameSwapRouter;
     // The trading pair
-    address public pantherSwapPair;
+    address public frameSwapPair;
     // In swap and liquify
     bool private _inSwapAndLiquify;
 
@@ -44,7 +44,7 @@ contract PantherToken is BEP20 {
     event MaxTransferAmountRateUpdated(address indexed operator, uint256 previousRate, uint256 newRate);
     event SwapAndLiquifyEnabledUpdated(address indexed operator, bool enabled);
     event MinAmountToLiquifyUpdated(address indexed operator, uint256 previousAmount, uint256 newAmount);
-    event PantherSwapRouterUpdated(address indexed operator, address indexed router, address indexed pair);
+    event FrameSwapRouterUpdated(address indexed operator, address indexed router, address indexed pair);
     event SwapAndLiquify(uint256 tokensSwapped, uint256 ethReceived, uint256 tokensIntoLiqudity);
 
     modifier onlyOperator() {
@@ -78,9 +78,9 @@ contract PantherToken is BEP20 {
     }
 
     /**
-     * @notice Constructs the PantherToken contract.
+     * @notice Constructs the FrameToken contract.
      */
-    constructor() BEP20("PantherSwap Token", "PANTHER") {
+    constructor() BEP20("FrameSwap Token", "PANTHER") {
         _operator = _msgSender();
         emit OperatorTransferred(address(0), _operator);
 
@@ -102,9 +102,9 @@ contract PantherToken is BEP20 {
         if (
             swapAndLiquifyEnabled == true
             && _inSwapAndLiquify == false
-            && address(pantherSwapRouter) != address(0)
-            && pantherSwapPair != address(0)
-            && sender != pantherSwapPair
+            && address(frameSwapRouter) != address(0)
+            && frameSwapPair != address(0)
+            && sender != frameSwapPair
             && sender != owner()
         ) {
             swapAndLiquify();
@@ -165,15 +165,15 @@ contract PantherToken is BEP20 {
 
     /// @dev Swap tokens for eth
     function swapTokensForEth(uint256 tokenAmount) private {
-        // generate the pantherSwap pair path of token -> weth
+        // generate the frameSwap pair path of token -> weth
         address[] memory path = new address[](2);
         path[0] = address(this);
-        path[1] = pantherSwapRouter.WETH();
+        path[1] = frameSwapRouter.WETH();
 
-        _approve(address(this), address(pantherSwapRouter), tokenAmount);
+        _approve(address(this), address(frameSwapRouter), tokenAmount);
 
         // make the swap
-        pantherSwapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
+        frameSwapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
             0, // accept any amount of ETH
             path,
@@ -185,10 +185,10 @@ contract PantherToken is BEP20 {
     /// @dev Add liquidity
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // approve token transfer to cover all possible scenarios
-        _approve(address(this), address(pantherSwapRouter), tokenAmount);
+        _approve(address(this), address(frameSwapRouter), tokenAmount);
 
         // add the liquidity
-        pantherSwapRouter.addLiquidityETH{value: ethAmount}(
+        frameSwapRouter.addLiquidityETH{value: ethAmount}(
             address(this),
             tokenAmount,
             0, // slippage is unavoidable
@@ -212,7 +212,7 @@ contract PantherToken is BEP20 {
         return _excludedFromAntiWhale[_account];
     }
 
-    // To receive BNB from pantherSwapRouter when swapping
+    // To receive BNB from frameSwapRouter when swapping
     receive() external payable {}
 
     /**
@@ -275,11 +275,11 @@ contract PantherToken is BEP20 {
      * @dev Update the swap router.
      * Can only be called by the current operator.
      */
-    function updatePantherSwapRouter(address _router) public onlyOperator {
-        pantherSwapRouter = IUniswapV2Router02(_router);
-        pantherSwapPair = IUniswapV2Factory(pantherSwapRouter.factory()).getPair(address(this), pantherSwapRouter.WETH());
-        require(pantherSwapPair != address(0), "PANTHER::updatePantherSwapRouter: Invalid pair address.");
-        emit PantherSwapRouterUpdated(msg.sender, address(pantherSwapRouter), pantherSwapPair);
+    function updateFrameSwapRouter(address _router) public onlyOperator {
+        frameSwapRouter = IUniswapV2Router02(_router);
+        frameSwapPair = IUniswapV2Factory(frameSwapRouter.factory()).getPair(address(this), frameSwapRouter.WETH());
+        require(frameSwapPair != address(0), "PANTHER::updateFrameSwapRouter: Invalid pair address.");
+        emit FrameSwapRouterUpdated(msg.sender, address(frameSwapRouter), frameSwapPair);
     }
 
     /**
