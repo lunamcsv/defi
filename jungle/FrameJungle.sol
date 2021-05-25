@@ -11,7 +11,7 @@ contract FrameJungleInitializable is Ownable, ReentrancyGuard {
     using SafeBEP20 for IBEP20;
 
     // The address of the frame jungle factory
-    address public PANTHER_JUNGLE_FACTORY;
+    address public FRAME_JUNGLE_FACTORY;
 
     // Whether a limit is set for users
     bool public hasUserLimit;
@@ -22,10 +22,10 @@ contract FrameJungleInitializable is Ownable, ReentrancyGuard {
     // Accrued token per share
     uint256 public accTokenPerShare;
 
-    // The block number when PANTHER mining ends.
+    // The block number when FRAME mining ends.
     uint256 public bonusEndBlock;
 
-    // The block number when PANTHER mining starts.
+    // The block number when FRAME mining starts.
     uint256 public startBlock;
 
     // The block number of the last pool update
@@ -34,7 +34,7 @@ contract FrameJungleInitializable is Ownable, ReentrancyGuard {
     // The pool limit (0 if none)
     uint256 public poolLimitPerUser;
 
-    // PANTHER tokens created per block.
+    // FRAME tokens created per block.
     uint256 public rewardPerBlock;
 
     // The precision factor
@@ -64,7 +64,7 @@ contract FrameJungleInitializable is Ownable, ReentrancyGuard {
     event Withdraw(address indexed user, uint256 amount);
 
     constructor() {
-        PANTHER_JUNGLE_FACTORY = msg.sender;
+        FRAME_JUNGLE_FACTORY = msg.sender;
     }
 
     /*
@@ -87,7 +87,7 @@ contract FrameJungleInitializable is Ownable, ReentrancyGuard {
         address _admin
     ) external {
         require(!isInitialized, "Already initialized");
-        require(msg.sender == PANTHER_JUNGLE_FACTORY, "Not factory");
+        require(msg.sender == FRAME_JUNGLE_FACTORY, "Not factory");
 
         // Make this contract initialized
         isInitialized = true;

@@ -25,7 +25,7 @@ contract FrameToken is BEP20 {
     mapping(address => bool) private _excludedFromAntiWhale;
     // Automatic swap and liquify enabled
     bool public swapAndLiquifyEnabled = false;
-    // Min amount to liquify. (default 500 PANTHERs)
+    // Min amount to liquify. (default 500 FRAMEs)
     uint256 public minAmountToLiquify = 500 ether;
     // The swap router, modifiable. Will be changed to FrameSwap's router when our own AMM release
     IUniswapV2Router02 public frameSwapRouter;
@@ -58,7 +58,7 @@ contract FrameToken is BEP20 {
                 _excludedFromAntiWhale[sender] == false
                 && _excludedFromAntiWhale[recipient] == false
             ) {
-                require(amount <= MaxTransferAmount(), "PANTHER::antiWhale: Transfer amount exceeds the maxTransferAmount");
+                require(amount <= MaxTransferAmount(), "FRAME::antiWhale: Transfer amount exceeds the maxTransferAmount");
             }
         }
         _;
@@ -80,7 +80,7 @@ contract FrameToken is BEP20 {
     /**
      * @notice Constructs the FrameToken contract.
      */
-    constructor() BEP20("FrameSwap Token", "PANTHER") {
+    constructor() BEP20("FrameSwap Token", "FRAME") {
         _operator = _msgSender();
         emit OperatorTransferred(address(0), _operator);
 
@@ -96,7 +96,7 @@ contract FrameToken is BEP20 {
         _moveDelegates(address(0), _delegates[_to], _amount);
     }
 
-    /// @dev overrides transfer function to meet tokenomics of PANTHER
+    /// @dev overrides transfer function to meet tokenomics of FRAME
     function _transfer(address sender, address recipient, uint256 amount) internal virtual override antiWhale(sender, recipient, amount) {
         // swap and liquify
         if (
@@ -117,11 +117,11 @@ contract FrameToken is BEP20 {
             uint256 taxAmount = amount.mul(transferTaxRate).div(10000);
             uint256 burnAmount = taxAmount.mul(burnRate).div(100);
             uint256 liquidityAmount = taxAmount.sub(burnAmount);
-            require(taxAmount == burnAmount + liquidityAmount, "PANTHER::transfer: Burn value invalid");
+            require(taxAmount == burnAmount + liquidityAmount, "FRAME::transfer: Burn value invalid");
 
             // default 95% of transfer sent to recipient
             uint256 sendAmount = amount.sub(taxAmount);
-            require(amount == sendAmount + taxAmount, "PANTHER::transfer: Tax value invalid");
+            require(amount == sendAmount + taxAmount, "FRAME::transfer: Tax value invalid");
 
             super._transfer(sender, BURN_ADDRESS, burnAmount);
             super._transfer(sender, address(this), liquidityAmount);
@@ -220,7 +220,7 @@ contract FrameToken is BEP20 {
      * Can only be called by the current operator.
      */
     function updateTransferTaxRate(uint16 _transferTaxRate) public onlyOperator {
-        require(_transferTaxRate <= MAXIMUM_TRANSFER_TAX_RATE, "PANTHER::updateTransferTaxRate: Transfer tax rate must not exceed the maximum rate.");
+        require(_transferTaxRate <= MAXIMUM_TRANSFER_TAX_RATE, "FRAME::updateTransferTaxRate: Transfer tax rate must not exceed the maximum rate.");
         emit TransferTaxRateUpdated(msg.sender, transferTaxRate, _transferTaxRate);
         transferTaxRate = _transferTaxRate;
     }
@@ -230,7 +230,7 @@ contract FrameToken is BEP20 {
      * Can only be called by the current operator.
      */
     function updateBurnRate(uint16 _burnRate) public onlyOperator {
-        require(_burnRate <= 100, "PANTHER::updateBurnRate: Burn rate must not exceed the maximum rate.");
+        require(_burnRate <= 100, "FRAME::updateBurnRate: Burn rate must not exceed the maximum rate.");
         emit BurnRateUpdated(msg.sender, burnRate, _burnRate);
         burnRate = _burnRate;
     }
@@ -240,7 +240,7 @@ contract FrameToken is BEP20 {
      * Can only be called by the current operator.
      */
     function updateMaxTransferAmountRate(uint16 _maxTransferAmountRate) public onlyOperator {
-        require(_maxTransferAmountRate <= 10000, "PANTHER::updateMaxTransferAmountRate: Max transfer amount rate must not exceed the maximum rate.");
+        require(_maxTransferAmountRate <= 10000, "FRAME::updateMaxTransferAmountRate: Max transfer amount rate must not exceed the maximum rate.");
         emit MaxTransferAmountRateUpdated(msg.sender, maxTransferAmountRate, _maxTransferAmountRate);
         maxTransferAmountRate = _maxTransferAmountRate;
     }
@@ -278,7 +278,7 @@ contract FrameToken is BEP20 {
     function updateFrameSwapRouter(address _router) public onlyOperator {
         frameSwapRouter = IUniswapV2Router02(_router);
         frameSwapPair = IUniswapV2Factory(frameSwapRouter.factory()).getPair(address(this), frameSwapRouter.WETH());
-        require(frameSwapPair != address(0), "PANTHER::updateFrameSwapRouter: Invalid pair address.");
+        require(frameSwapPair != address(0), "FRAME::updateFrameSwapRouter: Invalid pair address.");
         emit FrameSwapRouterUpdated(msg.sender, address(frameSwapRouter), frameSwapPair);
     }
 
@@ -294,7 +294,7 @@ contract FrameToken is BEP20 {
      * Can only be called by the current operator.
      */
     function transferOperator(address newOperator) public onlyOperator {
-        require(newOperator != address(0), "PANTHER::transferOperator: new operator is the zero address");
+        require(newOperator != address(0), "FRAME::transferOperator: new operator is the zero address");
         emit OperatorTransferred(_operator, newOperator);
         _operator = newOperator;
     }
@@ -401,9 +401,9 @@ contract FrameToken is BEP20 {
         );
 
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "PANTHER::delegateBySig: invalid signature");
-        require(nonce == nonces[signatory]++, "PANTHER::delegateBySig: invalid nonce");
-        require(block.timestamp <= expiry, "PANTHER::delegateBySig: signature expired");
+        require(signatory != address(0), "FRAME::delegateBySig: invalid signature");
+        require(nonce == nonces[signatory]++, "FRAME::delegateBySig: invalid nonce");
+        require(block.timestamp <= expiry, "FRAME::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -433,7 +433,7 @@ contract FrameToken is BEP20 {
         view
         returns (uint256)
     {
-        require(blockNumber < block.number, "PANTHER::getPriorVotes: not yet determined");
+        require(blockNumber < block.number, "FRAME::getPriorVotes: not yet determined");
 
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -470,7 +470,7 @@ contract FrameToken is BEP20 {
         internal
     {
         address currentDelegate = _delegates[delegator];
-        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying PANTHERs (not scaled);
+        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying FRAMEs (not scaled);
         _delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);
@@ -506,7 +506,7 @@ contract FrameToken is BEP20 {
     )
         internal
     {
-        uint32 blockNumber = safe32(block.number, "PANTHER::_writeCheckpoint: block number exceeds 32 bits");
+        uint32 blockNumber = safe32(block.number, "FRAME::_writeCheckpoint: block number exceeds 32 bits");
 
         if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
             checkpoints[delegatee][nCheckpoints - 1].votes = newVotes;

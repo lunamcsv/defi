@@ -13,7 +13,7 @@ import "./FrameToken.sol";
 // MasterChef is the master of Frame. He can make Frame and he is a fair guy.
 //
 // Note that it's ownable and the owner wields tremendous power. The ownership
-// will be transferred to a governance smart contract once PANTHER is sufficiently
+// will be transferred to a governance smart contract once FRAME is sufficiently
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
@@ -28,7 +28,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
         uint256 rewardLockedUp;  // Reward locked up.
         uint256 nextHarvestUntil; // When can the user harvest again.
         //
-        // We do some fancy math here. Basically, any point in time, the amount of PANTHERs
+        // We do some fancy math here. Basically, any point in time, the amount of FRAMEs
         // entitled to a user but is pending to be distributed is:
         //
         //   pending reward = (user.amount * pool.accFramePerShare) - user.rewardDebt
@@ -43,20 +43,20 @@ contract MasterChef is Ownable, ReentrancyGuard {
     // Info of each pool.
     struct PoolInfo {
         IBEP20 lpToken;           // Address of LP token contract.
-        uint256 allocPoint;       // How many allocation points assigned to this pool. PANTHERs to distribute per block.
-        uint256 lastRewardBlock;  // Last block number that PANTHERs distribution occurs.
-        uint256 accFramePerShare;   // Accumulated PANTHERs per share, times 1e12. See below.
+        uint256 allocPoint;       // How many allocation points assigned to this pool. FRAMEs to distribute per block.
+        uint256 lastRewardBlock;  // Last block number that FRAMEs distribution occurs.
+        uint256 accFramePerShare;   // Accumulated FRAMEs per share, times 1e12. See below.
         uint16 depositFeeBP;      // Deposit fee in basis points
         uint256 harvestInterval;  // Harvest interval in seconds
     }
 
-    // The PANTHER TOKEN!
+    // The FRAME TOKEN!
     FrameToken public frame;
     // Dev address.
     address public devAddress;
     // Deposit Fee address
     address public feeAddress;
-    // PANTHER tokens created per block.
+    // FRAME tokens created per block.
     uint256 public framePerBlock;
     // Bonus muliplier for early frame makers.
     uint256 public constant BONUS_MULTIPLIER = 1;
@@ -69,7 +69,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when PANTHER mining starts.
+    // The block number when FRAME mining starts.
     uint256 public startBlock;
     // Total locked up rewards
     uint256 public totalLockedUpRewards;
@@ -125,7 +125,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
         }));
     }
 
-    // Update the given pool's PANTHER allocation point and deposit fee. Can only be called by the owner.
+    // Update the given pool's FRAME allocation point and deposit fee. Can only be called by the owner.
     function set(uint256 _pid, uint256 _allocPoint, uint16 _depositFeeBP, uint256 _harvestInterval, bool _withUpdate) public onlyOwner {
         require(_depositFeeBP <= 10000, "set: invalid deposit fee basis points");
         require(_harvestInterval <= MAXIMUM_HARVEST_INTERVAL, "set: invalid harvest interval");
@@ -143,7 +143,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
         return _to.sub(_from).mul(BONUS_MULTIPLIER);
     }
 
-    // View function to see pending PANTHERs on frontend.
+    // View function to see pending FRAMEs on frontend.
     function pendingFrame(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
@@ -158,7 +158,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
         return pending.add(user.rewardLockedUp);
     }
 
-    // View function to see if user can harvest PANTHERs.
+    // View function to see if user can harvest FRAMEs.
     function canHarvest(uint256 _pid, address _user) public view returns (bool) {
         UserInfo storage user = userInfo[_pid][_user];
         return block.timestamp >= user.nextHarvestUntil;
@@ -191,7 +191,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit LP tokens to MasterChef for PANTHER allocation.
+    // Deposit LP tokens to MasterChef for FRAME allocation.
     function deposit(uint256 _pid, uint256 _amount, address _referrer) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -246,7 +246,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
         emit EmergencyWithdraw(msg.sender, _pid, amount);
     }
 
-    // Pay or lockup pending PANTHERs.
+    // Pay or lockup pending FRAMEs.
     function payOrLockupPendingFrame(uint256 _pid) internal {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -276,7 +276,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
         }
     }
 
-    // Safe frame transfer function, just in case if rounding error causes pool to not have enough PANTHERs.
+    // Safe frame transfer function, just in case if rounding error causes pool to not have enough FRAMEs.
     function safeFrameTransfer(address _to, uint256 _amount) internal {
         uint256 frameBal = frame.balanceOf(address(this));
         if (_amount > frameBal) {

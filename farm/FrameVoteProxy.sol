@@ -41,7 +41,7 @@ contract FrameVoteProxy {
     }
 
     function symbol() external pure returns (string memory) {
-        return "PANTHER-VOTE";
+        return "FRAME-VOTE";
     }
 
     function totalSupply() external view returns (uint256) {
@@ -55,9 +55,9 @@ contract FrameVoteProxy {
         balance = balance.add(IBEP20(frame).balanceOf(_voter));
         // frame in frame pool
         balance = balance.add(IMasterChef(masterChef).userInfo(framePoolPid, _voter).amount);
-        // frame in PANTHER-BNB liquidity pool
+        // frame in FRAME-BNB liquidity pool
         balance = balance.add(balanceInLiquidityPoolAndFarm(frameBNB, frameBNBFarmPid, _voter));
-        // frame in PANTHER-BUSD liquidity pool
+        // frame in FRAME-BUSD liquidity pool
         balance = balance.add(balanceInLiquidityPoolAndFarm(frameBUSD, frameBUSDFarmPid, _voter));
         // frame in vaults
         balance = balance.add(IBEP20(autoSharkFramePool).balanceOf(_voter));
